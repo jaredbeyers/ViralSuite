@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ViralSuite - Job {{ job.id }}</title>
+    <style>
+      :root{
+        --bg:#050712;
+        --panel:#0d1019;
+        --border:#1e293b;
+        --muted:#9aa5ba;
+      }
+      body{
+        background:
+          radial-gradient(circle at top left, rgba(79,70,229,.25), transparent 55%),
+          radial-gradient(circle at bottom right, rgba(14,165,233,.2), transparent 55%),
+          var(--bg);
+        color:#f3f5f7;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        margin:0;
+        min-height:100vh;
+        display:flex;
+        justify-content:center;
+      }
+      .shell{
+        width:100%;
+        max-width:960px;
+        padding:26px 20px 40px;
+      }
+      .pill {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:4px 10px;
+        border-radius:999px;
+        background:rgba(15,23,42,.9);
+        border:1px solid rgba(148,163,184,.45);
+        font-size:11px;
+      }
+      pre {
+        background:var(--panel);
+        color:#dbe2ee;
+        padding:12px;
+        border-radius: 12px;
+        overflow:auto;
+        border:1px solid var(--border);
+        font-size:12px;
+      }
+      a { color:#e5e7eb; }
+      table { border-collapse: collapse; width:100%; }
+      th, td { border-bottom: 1px solid var(--border); text-align:left; padding: 8px; font-size: 13px; vertical-align: top; }
+      th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+      .muted { color:var(--muted); font-size: 12px; }
+      .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .card {
+        border:1px solid rgba(148,163,184,.4);
+        border-radius: 16px;
+        padding: 12px 14px 14px;
+        background: radial-gradient(circle at top left, rgba(148,163,184,.18), transparent 55%),
+                    rgba(15,23,42,.95);
+      }
+      code { background: rgba(15,23,42,.95); padding:2px 6px; border-radius: 8px; }
+      .btn {
+        display:inline-block;
+        padding:9px 12px;
+        border-radius: 999px;
+        border:1px solid #273549;
+        text-decoration:none;
+        font-size:13px;
+        transition:background .16s ease, border-color .16s ease, transform .08s ease, box-shadow .16s ease;
+      }
+      .btn.primary {
+        background:linear-gradient(135deg,#4f46e5 0%,#22c55e 40%,#f97316 100%);
+        color:#020617;
+        border-color:transparent;
+        font-weight:700;
+        box-shadow:0 12px 30px rgba(56,189,248,.6);
+      }
+      .btn.secondary { background:transparent; color:#f3f5f7; }
+      .btn:hover{
+        transform:translateY(-1px);
+        box-shadow:0 14px 40px rgba(15,23,42,.8);
+        border-color:#4f46e5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <div>
+        <h1 style="margin:0; font-size:22px; letter-spacing:.03em;">ViralSuite Job</h1>
+        <div class="muted"><code>{{ job.id }}</code></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+        <a class="btn secondary" href="/">Start new job</a>
+        <div class="pill">status: <b id="status">{{ job.status }}</b></div>
+        <div class="pill">elapsed: <b id="elapsed">00:00</b></div>
+      </div>
+    </div>
+    <div class="muted" id="message" style="margin-top:10px;">{{ job.message }}</div>
+
+    <div id="done" style="display:none; margin-top:18px;">
+      <div class="grid">
+        <div class="card">
+          <div><b>Outputs</b></div>
+          <div class="muted" style="margin-top:8px;">Run folder: <code id="outdir"></code></div>
+          <div style="margin-top:10px;">
+            <div><a id="report_link" href="#">Download report.json</a></div>
+            <div><a id="montage_link" href="#">Download montage</a></div>
+            <div><a id="clips_link" href="#">Open clips folder</a></div>
+          </div>
+        </div>
+        <div class="card">
+          <div><b>Readable summary</b></div>
+          <div class="muted" style="margin-top:8px;">Top clips (sorted by rank)</div>
+          <div id="summary" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div><b>Full JSON (report)</b></div>
+        <pre id="json"></pre>
+      </div>
+    </div>
+
+    <div id="err" style="display:none; margin-top:18px;">
+      <div class="card">
+        <div><b>Error</b></div>
+        <pre id="errtxt"></pre>
+      </div>
+    </div>
+
+    <script>
+      const createdAt = {{ job.created_at }};
+      let lastStatus = "{{ job.status }}";
+      let notified = false;
+
+      function fmtElapsed(sec) {
+        sec = Math.max(0, Math.floor(sec));
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        return `${m}:${String(s).padStart(2,'0')}`;
+      }
+
+      function updateElapsed() {
+        const now = Date.now() / 1000;
+        document.getElementById('elapsed').textContent = fmtElapsed(now - createdAt);
+      }
+
+      function maybeNotify(status, message) {
+        if (notified) return;
+        if (!(status === 'done' || status === 'error')) return;
+
+        const title = status === 'done' ? 'Viral run completed' : 'Viral run failed';
+        const body = (message || '').slice(0, 180);
+
+        // Always update tab title as a lightweight "notification"
+        document.title = (status === 'done' ? '✅ Done - ' : '❌ Error - ') + document.title;
+
+        if (!('Notification' in window)) {
+          notified = true;
+          return;
+        }
+
+        const send = () => {
+          try { new Notification(title, { body }); } catch (_) {}
+          notified = true;
+        };
+
+        if (Notification.permission === 'granted') return send();
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().then(p => { if (p === 'granted') send(); else notified = true; });
+          return;
+        }
+        notified = true;
+      }
+
+      async function poll() {
+        const res = await fetch('/api/job/{{ job.id }}');
+        const j = await res.json();
+        document.getElementById('status').textContent = j.status;
+        document.getElementById('message').textContent = j.message || '';
+        updateElapsed();
+
+        if (j.status !== lastStatus) {
+          lastStatus = j.status;
+          maybeNotify(j.status, j.message || '');
+        }
+
+        if (j.status === 'done') {
+          document.getElementById('done').style.display = 'block';
+          document.getElementById('err').style.display = 'none';
+
+          const outdir = j.outdir || '';
+          document.getElementById('outdir').textContent = outdir;
+
+          const base = `/runs/${j.id}/`;
+          const reportName = (j.result && j.result.files && j.result.files.report_json) || 'report.json';
+          const montageName = (j.result && j.result.files && j.result.files.montage) || 'montage.mp4';
+
+          document.getElementById('report_link').href = base + reportName;
+          document.getElementById('montage_link').href = base + montageName;
+          document.getElementById('clips_link').href = base + 'clips/';
+
+          const report = (j.result && j.result.report) || null;
+          if (report) {
+            document.getElementById('json').textContent = JSON.stringify(report, null, 2);
+
+            const clips = report.clips || [];
+            let html = '<table><thead><tr><th>Rank</th><th>Time</th><th>Score</th><th>Caption idea</th><th>Platforms</th></tr></thead><tbody>';
+            for (const c of clips.slice(0, 12)) {
+              const t = `${c.start_s.toFixed(2)}s → ${c.end_s.toFixed(2)}s (${c.length_s.toFixed(0)}s)`;
+              const cap = c.best_caption || '';
+              const p = c.platform_scores || {};
+              html += `<tr>
+                <td>${c.rank}</td>
+                <td>${t}</td>
+                <td><b>${c.overall_score.toFixed(1)}</b></td>
+                <td>${cap}</td>
+                <td class="muted">TikTok ${Number(p.tiktok||0).toFixed(0)} | Shorts ${Number(p.youtube_shorts||0).toFixed(0)} | Reels ${Number(p.instagram_reels||0).toFixed(0)}</td>
+              </tr>`;
+            }
+            html += '</tbody></table>';
+            document.getElementById('summary').innerHTML = html;
+          }
+
+          return;
+        }
+
+        if (j.status === 'error') {
+          document.getElementById('done').style.display = 'none';
+          document.getElementById('err').style.display = 'block';
+          document.getElementById('errtxt').textContent = j.message || 'Unknown error';
+          maybeNotify('error', j.message || '');
+          return;
+        }
+
+        setTimeout(poll, 1200);
+      }
+      // start timer immediately
+      updateElapsed();
+      const t = setInterval(() => {
+        // Freeze elapsed time once job completes
+        const s = document.getElementById('status').textContent || '';
+        if (s === 'done' || s === 'error') { clearInterval(t); return; }
+        updateElapsed();
+      }, 1000);
+      poll();
+    </script>
+  </body>
+</html>
+

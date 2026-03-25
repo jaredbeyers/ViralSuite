@@ -1,0 +1,529 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ViralSuite</title>
+    <style>
+      :root{
+        --bg:#050712;
+        --bg-alt:#050814;
+        --panel:#0d1019;
+        --border:#1e2430;
+        --text:#f3f5f7;
+        --muted:#9aa5ba;
+        --accent:#ffffff;
+        --accent-soft:linear-gradient(135deg,#fdfbfb 0%,#ebedee 40%,#c3d0ff 100%);
+        --accent-strong:linear-gradient(135deg,#4f46e5 0%,#14b8a6 40%,#f97316 100%);
+        --shadow:0 18px 60px rgba(0,0,0,.75);
+      }
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(79,70,229,.25), transparent 55%),
+          radial-gradient(circle at bottom right, rgba(14,165,233,.18), transparent 55%),
+          var(--bg);
+        color:var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        margin:0;
+        min-height:100vh;
+        display:flex;
+        align-items:flex-start;
+        justify-content:center;
+      }
+      .shell {
+        width:100%;
+        max-width:1120px;
+        padding:28px 20px 40px;
+      }
+      header {
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:16px;
+        margin-bottom:16px;
+      }
+      h1 {
+        margin:0 0 4px;
+        letter-spacing:.06em;
+        text-transform:uppercase;
+        font-size:18px;
+      }
+      .title-big {
+        font-size:28px;
+        font-weight:650;
+        letter-spacing:.01em;
+      }
+      .badge {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:4px 10px;
+        border-radius:999px;
+        border:1px solid rgba(148,163,184,.4);
+        background:rgba(15,23,42,.75);
+        font-size:11px;
+        color:var(--muted);
+      }
+      .badge-dot {
+        width:7px;
+        height:7px;
+        border-radius:999px;
+        background:radial-gradient(circle,#22c55e,#16a34a);
+        box-shadow:0 0 0 4px rgba(34,197,94,.25);
+      }
+      .sub { color:var(--muted); font-size:13px; line-height:1.5; max-width:520px; }
+      .row { display:flex; gap:18px; flex-wrap:wrap; margin-top:20px; }
+      .card {
+        background: radial-gradient(circle at top left, rgba(148,163,184,.16), transparent 50%),
+                    radial-gradient(circle at bottom right, rgba(15,23,42,.8), rgba(15,23,42,.9));
+        border:1px solid rgba(148,163,184,.3);
+        border-radius:18px;
+        padding:18px 18px 16px;
+        flex:1;
+        min-width:340px;
+        box-shadow:var(--shadow);
+        position:relative;
+        overflow:hidden;
+      }
+      .card::before{
+        content:"";
+        position:absolute;
+        inset:-1px;
+        pointer-events:none;
+        background:linear-gradient(120deg,rgba(148,163,184,.4),transparent 20%,transparent 80%,rgba(56,189,248,.4));
+        mix-blend-mode:soft-light;
+        opacity:.6;
+      }
+      .card-inner{ position:relative; z-index:1; }
+      label { display: block; font-size: 12px; color: var(--muted); margin-top: 12px; }
+      input, select {
+        width:100%;
+        padding:10px 12px;
+        border:1px solid rgba(30,41,59,.9);
+        background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(15,23,42,.9));
+        color:var(--text);
+        border-radius:12px;
+        margin-top:6px;
+        outline:none;
+        font-size:13px;
+        transition:border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .08s ease;
+      }
+      input:focus, select:focus {
+        border-color:#4f46e5;
+        box-shadow:0 0 0 1px rgba(79,70,229,.5);
+        transform:translateY(-0.5px);
+      }
+      .btnrow { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px; }
+      button {
+        padding:11px 14px;
+        border:1px solid #273549;
+        border-radius:999px;
+        background:rgba(15,23,42,.95);
+        color:#e5e7eb;
+        cursor:pointer;
+        font-size:13px;
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        transition:background .16s ease, border-color .16s ease, transform .08s ease, box-shadow .16s ease, color .16s ease;
+      }
+      button:hover:not(:disabled){
+        background:#111827;
+        transform:translateY(-1px);
+        box-shadow:0 10px 30px rgba(15,23,42,.7);
+      }
+      button.primary {
+        background:var(--accent-strong);
+        color:#0b0d10;
+        border-color:transparent;
+        font-weight:700;
+        box-shadow:0 12px 35px rgba(56,189,248,.55);
+      }
+      button.primary:hover:not(:disabled){
+        box-shadow:0 16px 40px rgba(56,189,248,.7);
+      }
+      button.secondary {
+        background:transparent;
+        color:var(--text);
+      }
+      button.tab { width: 100%; }
+      button.tab.active {
+        background:var(--accent-soft);
+        color:#020617;
+        border-color:rgba(148,163,184,.4);
+        font-weight:750;
+      }
+      button:disabled { opacity: .55; cursor: not-allowed; }
+      .hint { color: var(--muted); font-size: 12px; margin-top: 10px; line-height: 1.45; }
+      .jobs { margin-top: 24px; }
+      .jobs-title{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom:6px;
+        font-size:13px;
+        color:var(--muted);
+      }
+      .job {
+        padding:10px 12px;
+        border:1px solid rgba(30,41,59,.9);
+        background:radial-gradient(circle at top left,rgba(30,64,175,.3),transparent 50%), rgba(15,23,42,.96);
+        border-radius:14px;
+        margin-top:8px;
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        align-items:center;
+        font-size:13px;
+      }
+      .job a{
+        color:#e5e7eb;
+        font-size:12px;
+        text-decoration:none;
+        padding:6px 10px;
+        border-radius:999px;
+        border:1px solid rgba(148,163,184,.4);
+        background:rgba(15,23,42,.9);
+        transition:background .16s ease, border-color .16s ease, transform .08s ease;
+      }
+      .job a:hover{
+        background:#020617;
+        border-color:#4f46e5;
+        transform:translateY(-1px);
+      }
+      code { background: rgba(15,23,42,.95); padding: 2px 6px; border-radius: 8px; }
+      .divider { height:1px; background: var(--border); margin: 14px 0; }
+      .toggle { display:flex; gap:10px; align-items:center; margin-top: 10px; }
+      .toggle input { width:auto; margin:0; }
+      .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 860px){ .grid2 { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div>
+          <div class="badge"><span class="badge-dot"></span><span>AI-powered viral clip lab</span></div>
+          <div style="margin-top:10px;">
+            <div class="title-big">ViralSuite</div>
+            <div class="sub" style="margin-top:4px;">Paste a long-form video link and instantly get ranked viral clips plus a tight, transcript-aware montage.</div>
+          </div>
+        </div>
+        <div class="sub" style="text-align:right; max-width:260px;">
+          Optimized for TikTok, Shorts, and Reels. Uses your b‑roll library to keep everything on brand.
+        </div>
+      </header>
+
+      <div class="row">
+        <div class="card" style="min-width: 520px;">
+          <div class="card-inner">
+        <div class="grid2" style="margin-top:4px;">
+          <button id="tab_score" class="tab active" type="button" onclick="setMode('score')">Generate Content</button>
+          <button id="tab_broll" class="tab" type="button" onclick="setMode('broll')">B-roll Library</button>
+        </div>
+
+        <div id="mode_score" style="display:none; margin-top:14px;">
+          <div class="divider"></div>
+          <h3 style="margin:6px 0 8px; font-size:14px;">Generate Content</h3>
+          <label>Video URL</label>
+          <input id="score_url" placeholder="https://www.youtube.com/watch?v=..." />
+
+          <div class="toggle">
+            <input id="use_broll" type="checkbox" />
+            <label for="use_broll" style="margin:0; color:var(--text);">Use B-roll replacement</label>
+            <span class="hint" style="margin:0;">(optional)</span>
+          </div>
+
+          <div id="broll_opts" style="display:none;">
+            <label>B-roll mode</label>
+            <select id="keep_visuals">
+              <option value="auto">Auto (only if audio-only / low-dynamics)</option>
+              <option value="replace">Always replace visuals</option>
+            </select>
+
+            <label>B-roll source</label>
+            <select id="broll_source">
+              <option value="random">Random from library</option>
+              <option value="existing">Choose existing</option>
+              <option value="upload">Upload new</option>
+              <option value="url">Add by URL</option>
+            </select>
+
+            <div id="broll_existing" style="display:none;">
+              <label>Select existing B-roll</label>
+              <select id="selected_broll">
+                <option value="">(random from library)</option>
+                {% for f in broll %}
+                  <option value="{{ f }}">{{ f }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div id="broll_upload" style="display:none;">
+              <label>Upload a new B-roll file</label>
+              <input id="broll_file" type="file" accept="video/*" />
+              <label>Upload label (optional)</label>
+              <input id="broll_file_label" placeholder="minecraft" />
+              <div class="btnrow">
+                <button class="secondary" type="button" onclick="uploadBroll()">Upload to library</button>
+              </div>
+              <div class="hint">After upload, it will appear in the existing list.</div>
+            </div>
+
+            <div id="broll_url_wrap" style="display:none;">
+              <label>B-roll URL</label>
+              <input id="broll_url" placeholder="https://www.youtube.com/watch?v=..." />
+              <div class="grid2">
+                <div>
+                  <label>Label (optional)</label>
+                  <input id="broll_label" placeholder="minecraft" />
+                </div>
+                <div>
+                  <label>Trim start seconds</label>
+                  <input id="broll_trim" type="number" value="0" min="0" max="120" />
+                </div>
+              </div>
+              <div class="grid2">
+                <div>
+                  <label>Max seconds</label>
+                  <input id="broll_max" type="number" value="180" min="0" max="600" />
+                </div>
+                <div>
+                  <label>&nbsp;</label>
+                  <button class="secondary" type="button" onclick="addBroll()">Add URL to library</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <details style="margin-top: 12px;">
+            <summary class="hint" style="cursor:pointer;">Advanced output options</summary>
+            <div class="grid2">
+              <div>
+                <label>Export top N clips</label>
+                <input id="export_top" type="number" value="5" min="0" max="30" />
+              </div>
+              <div>
+                <label>Montage target seconds</label>
+                <input id="montage_seconds" type="number" value="240" min="30" max="600" />
+              </div>
+            </div>
+          </details>
+
+          <div class="btnrow">
+            <button class="primary" type="button" onclick="startScore()">Start scoring job</button>
+            <button class="secondary" type="button" onclick="document.getElementById('score_url').value=''">Clear</button>
+          </div>
+        </div>
+
+        <div id="mode_broll" style="display:none; margin-top:14px;">
+          <div class="divider"></div>
+          <h3 style="margin:0 0 8px; font-size:14px;">Add / manage B-roll</h3>
+          <label>Method</label>
+          <select id="broll_manage_method">
+            <option value="url">Add by URL</option>
+            <option value="upload">Upload a file</option>
+          </select>
+
+          <div id="broll_manage_upload">
+            <label>Upload a new B-roll file</label>
+            <input id="broll_file2" type="file" accept="video/*" />
+            <label>Upload label (optional)</label>
+            <input id="broll_file_label2" placeholder="minecraft" />
+            <div class="btnrow">
+              <button class="primary" type="button" onclick="uploadBroll2()">Upload to library</button>
+            </div>
+          </div>
+
+          <div id="broll_manage_url" style="display:none;">
+            <label>B-roll URL</label>
+            <input id="broll_url2" placeholder="https://www.youtube.com/watch?v=..." />
+            <div class="grid2">
+              <div>
+                <label>Label (optional)</label>
+                <input id="broll_label2" placeholder="minecraft" />
+              </div>
+              <div>
+                <label>Trim start seconds</label>
+                <input id="broll_trim2" type="number" value="0" min="0" max="120" />
+              </div>
+            </div>
+            <div class="grid2">
+              <div>
+                <label>Max seconds</label>
+                <input id="broll_max2" type="number" value="180" min="0" max="600" />
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <button class="primary" type="button" onclick="addBroll2()">Add URL to library</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hint">Your library is used when you enable B-roll in scoring.</div>
+        </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="jobs">
+        <div class="jobs-title">
+          <span>Recent runs</span>
+          <span style="font-size:11px;">Jobs are processed in the background; you can open multiple tabs.</span>
+        </div>
+        <div id="jobs"></div>
+      </div>
+    </div>
+
+    <script>
+      const useBroll = document.getElementById('use_broll');
+      const brollOpts = document.getElementById('broll_opts');
+      const modeScore = document.getElementById('mode_score');
+      const modeBroll = document.getElementById('mode_broll');
+      const tabScore = document.getElementById('tab_score');
+      const tabBroll = document.getElementById('tab_broll');
+      const brollSource = document.getElementById('broll_source');
+      const brollExisting = document.getElementById('broll_existing');
+      const brollUpload = document.getElementById('broll_upload');
+      const brollUrlWrap = document.getElementById('broll_url_wrap');
+      const brollManageMethod = document.getElementById('broll_manage_method');
+      const brollManageUpload = document.getElementById('broll_manage_upload');
+      const brollManageUrl = document.getElementById('broll_manage_url');
+
+      function setMode(m) {
+        modeScore.style.display = (m === 'score') ? 'block' : 'none';
+        modeBroll.style.display = (m === 'broll') ? 'block' : 'none';
+        tabScore.classList.toggle('active', m === 'score');
+        tabBroll.classList.toggle('active', m === 'broll');
+      }
+      // default landing mode
+      setMode('score');
+
+      useBroll.addEventListener('change', () => {
+        brollOpts.style.display = useBroll.checked ? 'block' : 'none';
+      });
+
+      function updateBrollSource() {
+        const v = brollSource.value;
+        brollExisting.style.display = (v === 'existing') ? 'block' : 'none';
+        brollUpload.style.display = (v === 'upload') ? 'block' : 'none';
+        brollUrlWrap.style.display = (v === 'url') ? 'block' : 'none';
+      }
+      brollSource.addEventListener('change', updateBrollSource);
+      updateBrollSource();
+
+      function updateBrollManage() {
+        const v = brollManageMethod.value;
+        brollManageUpload.style.display = (v === 'upload') ? 'block' : 'none';
+        brollManageUrl.style.display = (v === 'url') ? 'block' : 'none';
+      }
+      brollManageMethod.addEventListener('change', updateBrollManage);
+      // Default to URL flow (less friction)
+      brollManageMethod.value = 'url';
+      updateBrollManage();
+
+      function addJobLink(jobId, label) {
+        const el = document.createElement('div');
+        el.className = 'job';
+        el.innerHTML = `<div><b>${label}</b><div class="hint" style="margin-top:4px;">Job: <code>${jobId}</code></div></div><div><a href="/job/${jobId}">Open</a></div>`;
+        const list = document.getElementById('jobs');
+        if (!list) return;
+        list.prepend(el);
+      }
+
+      async function refreshBrollList(selectNew) {
+        const res = await fetch('/api/broll/list');
+        const j = await res.json();
+        const sel = document.getElementById('selected_broll');
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">(random from library)</option>';
+        for (const f of (j.broll || [])) {
+          const opt = document.createElement('option');
+          opt.value = f; opt.textContent = f;
+          sel.appendChild(opt);
+        }
+        sel.value = selectNew || cur || '';
+      }
+
+      async function startScore() {
+        const fd = new FormData();
+        fd.append('url', document.getElementById('score_url').value);
+        // keep_visuals: keep unless broll toggled on
+        fd.append('keep_visuals', useBroll.checked ? document.getElementById('keep_visuals').value : 'keep');
+        if (useBroll.checked) {
+          if (brollSource.value === 'existing') {
+            const sel = document.getElementById('selected_broll').value;
+            if (sel) fd.append('selected_broll', sel);
+          }
+        }
+        fd.append('export_top', (document.getElementById('export_top') || {value: 5}).value);
+        fd.append('montage_seconds', (document.getElementById('montage_seconds') || {value: 120}).value);
+        const res = await fetch('/api/score/url', { method: 'POST', body: fd });
+        const j = await res.json();
+        addJobLink(j.job_id, 'Score run started');
+      }
+
+      async function addBroll() {
+        const fd = new FormData();
+        fd.append('url', document.getElementById('broll_url').value);
+        const label = document.getElementById('broll_label').value;
+        if (label) fd.append('label', label);
+        fd.append('trim_start', document.getElementById('broll_trim').value);
+        fd.append('max_seconds', document.getElementById('broll_max').value);
+        const res = await fetch('/api/broll/add_url', { method: 'POST', body: fd });
+        const j = await res.json();
+        addJobLink(j.job_id, 'B-roll add started');
+      }
+
+      async function addBroll2() {
+        const fd = new FormData();
+        fd.append('url', document.getElementById('broll_url2').value);
+        const label = document.getElementById('broll_label2').value;
+        if (label) fd.append('label', label);
+        fd.append('trim_start', document.getElementById('broll_trim2').value);
+        fd.append('max_seconds', document.getElementById('broll_max2').value);
+        const res = await fetch('/api/broll/add_url', { method: 'POST', body: fd });
+        const j = await res.json();
+        addJobLink(j.job_id, 'B-roll add started');
+      }
+
+      async function uploadBroll() {
+        const f = document.getElementById('broll_file').files[0];
+        if (!f) { alert('Choose a video file first'); return; }
+        const fd = new FormData();
+        fd.append('file', f);
+        const label = document.getElementById('broll_file_label').value;
+        if (label) fd.append('label', label);
+        const res = await fetch('/api/broll/upload', { method: 'POST', body: fd });
+        const j = await res.json();
+        if (j && j.saved_as) {
+          await refreshBrollList(j.saved_as);
+          alert('Uploaded: ' + j.saved_as);
+        } else {
+          alert('Upload finished.');
+          await refreshBrollList();
+        }
+      }
+
+      async function uploadBroll2() {
+        const f = document.getElementById('broll_file2').files[0];
+        if (!f) { alert('Choose a video file first'); return; }
+        const fd = new FormData();
+        fd.append('file', f);
+        const label = document.getElementById('broll_file_label2').value;
+        if (label) fd.append('label', label);
+        const res = await fetch('/api/broll/upload', { method: 'POST', body: fd });
+        const j = await res.json();
+        if (j && j.saved_as) {
+          await refreshBrollList(j.saved_as);
+          alert('Uploaded: ' + j.saved_as);
+        } else {
+          alert('Upload finished.');
+          await refreshBrollList();
+        }
+      }
+    </script>
+  </body>
+</html>
+
